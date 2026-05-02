@@ -84,13 +84,11 @@
             box-shadow: 0 0 14px rgba(0, 243, 255, 0.35);
         }
 
-        /* Estilo para campo readonly */
         input[readonly] {
             background: rgba(0, 0, 0, 0.85);
             border-color: rgba(0, 243, 255, 0.25);
             color: #00f3ff;
             cursor: not-allowed;
-            opacity: 0.95;
         }
 
         .currency-symbol { position: relative; }
@@ -131,7 +129,6 @@
             transform: translateY(-2px);
         }
 
-        /* ESTILO DO MODAL */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -181,9 +178,6 @@
             border-color: var(--neon-blue);
             transform: scale(1.05);
         }
-
-        .method-card img { width: 40px; margin-bottom: 10px; }
-        .method-name { font-weight: bold; color: white; }
 
         .close-modal {
             margin-top: 20px;
@@ -260,7 +254,6 @@
 
 <script>
     let dollarRate = 5.80;
-    let lastEdited = 'amount';
     
     const priceInput = document.getElementById('tokenPrice');
     const amountInput = document.getElementById('tokenAmount');
@@ -274,9 +267,12 @@
 
     // --- LÓGICA DE CÁLCULO ---
     amountInput.addEventListener('input', function(e) {
-        lastEdited = 'amount';
         let raw = e.target.value.replace(/\D/g, "");
-        if (raw === "") { resetFields(); return; }
+        if (raw === "") { 
+            payUsdInput.value = ""; 
+            payBrlInput.value = ""; 
+            return; 
+        }
         e.target.value = formatTokens(raw);
         let amount = parseFloat(raw);
         let usd = amount * parseFloat(priceInput.value);
@@ -285,29 +281,34 @@
     });
 
     payUsdInput.addEventListener('input', function(e) {
-        lastEdited = 'usd';
         let usd = parseFloat(e.target.value);
-        if (isNaN(usd)) { resetFields(); return; }
+        if (isNaN(usd)) { 
+            amountInput.value = ""; 
+            payBrlInput.value = ""; 
+            return; 
+        }
         payBrlInput.value = (usd * dollarRate).toFixed(2);
         amountInput.value = formatTokens(usd / parseFloat(priceInput.value));
     });
 
     payBrlInput.addEventListener('input', function(e) {
-        lastEdited = 'brl';
         let brl = parseFloat(e.target.value);
-        if (isNaN(brl)) { resetFields(); return; }
+        if (isNaN(brl)) { 
+            amountInput.value = ""; 
+            payUsdInput.value = ""; 
+            return; 
+        }
         let usd = brl / dollarRate;
         payUsdInput.value = usd.toFixed(2);
         amountInput.value = formatTokens(usd / parseFloat(priceInput.value));
     });
 
-    function resetFields() {
-        amountInput.value = ""; payUsdInput.value = ""; payBrlInput.value = "";
-    }
-
-    // --- LÓGICA DO MODAL E COMPRA ---
+    // --- MODAL E COMPRA ---
     function openModal() {
-        if (!amountInput.value) { alert("Por favor, insira uma quantidade ou valor."); return; }
+        if (!amountInput.value) { 
+            alert("Por favor, insira uma quantidade ou valor."); 
+            return; 
+        }
         document.getElementById('paymentModal').style.display = 'flex';
     }
 
@@ -316,8 +317,10 @@
     }
 
     function processPurchase(metodo) {
-        const qtd = amountInput.value;
-        const valorFinal = (metodo === 'Pix') ? `R$ \( {payBrlInput.value}` : ` \) ${payUsdInput.value}`;
+        const qtd = amountInput.value || "0";
+        let valorFinal = (metodo === 'Pix') 
+            ? `R$ ${payBrlInput.value || '0.00'}` 
+            : `$ ${payUsdInput.value || '0.00'}`;
         
         const mensagem = `Olá, quero adquirir o token KTI com desconto.%0A%0A` +
                          `*Detalhes do Pedido:*%0A` +
